@@ -48,6 +48,7 @@ import com.android.systemui.statusbar.SignalClusterView;
 import com.android.systemui.statusbar.phone.StatusBarIconController.DarkIconManager;
 import com.android.systemui.statusbar.phone.TickerView;
 import com.android.systemui.statusbar.policy.Clock;
+import com.android.systemui.statusbar.policy.ClockLeft;
 import com.android.systemui.statusbar.policy.DarkIconDispatcher;
 import com.android.systemui.statusbar.policy.EncryptionHelper;
 import com.android.systemui.statusbar.policy.KeyguardMonitor;
@@ -67,6 +68,7 @@ public class CollapsedStatusBarFragment extends Fragment implements CommandQueue
     private static final int CLOCK_DATE_POSITION_DEFAULT  = 0;
     private static final int CLOCK_DATE_POSITION_CENTERED = 1;
     private static final int CLOCK_DATE_POSITION_HIDDEN   = 2;
+    private static final int CLOCK_DATE_POSITION_LEFT   = 3;
 
     private PhoneStatusBarView mStatusBar;
     private KeyguardMonitor mKeyguardMonitor;
@@ -79,6 +81,7 @@ public class CollapsedStatusBarFragment extends Fragment implements CommandQueue
     private SignalClusterView mSignalClusterView;
     private Clock mClockDefault;
     private Clock mClockCentered;
+    private ClockLeft mLeftClock;
     private View mCenterClockLayout;
 
     private int mClockPosition = CLOCK_DATE_POSITION_DEFAULT;
@@ -213,6 +216,7 @@ public class CollapsedStatusBarFragment extends Fragment implements CommandQueue
         mSystemIconArea = mStatusBar.findViewById(R.id.system_icon_area);
         mSignalClusterView = mStatusBar.findViewById(R.id.signal_cluster);
         mClockDefault = (Clock) mStatusBar.findViewById(R.id.clock);
+        mLeftClock = mStatusBar.findViewById(R.id.left_clock);
         mClockCentered = (Clock) mStatusBar.findViewById(R.id.center_clock);
         mCenterClockLayout = mStatusBar.findViewById(R.id.center_clock_layout);
         Dependency.get(DarkIconDispatcher.class).addDarkReceiver(mSignalClusterView);
@@ -300,9 +304,11 @@ public class CollapsedStatusBarFragment extends Fragment implements CommandQueue
             if ((state1 & DISABLE_NOTIFICATION_ICONS) != 0) {
                 hideNotificationIconArea(animate);
                 hideCarrierName(animate);
+                hideLeftClock(animate);
             } else {
                 showNotificationIconArea(animate);
                 showCarrierName(animate);
+                showLeftClock(animate);
             }
         }
     }
@@ -372,6 +378,9 @@ public class CollapsedStatusBarFragment extends Fragment implements CommandQueue
             animateHide(mCLogo, animate, false);
         }
         animateHide(mBatteryBar, animate, true);
+        if (mClockPosition == CLOCK_DATE_POSITION_CENTERED) {
+            animateHide(mCenterClockLayout, animate ,false);
+        }
     }
 
     public void showNotificationIconArea(boolean animate) {
@@ -383,6 +392,9 @@ public class CollapsedStatusBarFragment extends Fragment implements CommandQueue
             animateShow(mCLogo, animate);
         }
         animateShow(mBatteryBar, animate);
+        if (mClockPosition == CLOCK_DATE_POSITION_CENTERED) {
+            animateShow(mCenterClockLayout, animate);
+        }
     }
 
     public void hideCarrierName(boolean animate) {
@@ -501,8 +513,10 @@ public class CollapsedStatusBarFragment extends Fragment implements CommandQueue
        }
         setCarrierLabel(animate);
         initTickerView();
+        mStatusBarComponent.updateBatterySettings();
 	    updateCustomLogo();
         setUpClock();
+        updateClockStyle(animate);
         if (mNotificationIconAreaInner != null) {
             if (mShowLogo == 1) {
                 if (mNotificationIconAreaInner.getVisibility() == View.VISIBLE) {
@@ -565,13 +579,21 @@ public class CollapsedStatusBarFragment extends Fragment implements CommandQueue
                     mClockDefault.setClockVisibleByUser(true);
                     mCenterClockLayout.setVisibility(View.GONE);
                     mClockCentered.setClockVisibleByUser(false);
+                   // mLeftClock.setClockVisibleByUser(false);
                     break;
                 case CLOCK_DATE_POSITION_CENTERED:
                     mClockDefault.setClockVisibleByUser(false);
                     mCenterClockLayout.setVisibility(View.VISIBLE);
                     mClockCentered.setClockVisibleByUser(true);
+                    //mLeftClock.setClockVisibleByUser(false);
                     break;
                 case CLOCK_DATE_POSITION_HIDDEN:
+                    mClockDefault.setClockVisibleByUser(false);
+                    mCenterClockLayout.setVisibility(View.GONE);
+                    mClockCentered.setClockVisibleByUser(false);
+                    //mLeftClock.setClockVisibleByUser(false);
+                    break;
+                case CLOCK_DATE_POSITION_LEFT:
                     mClockDefault.setClockVisibleByUser(false);
                     mCenterClockLayout.setVisibility(View.GONE);
                     mClockCentered.setClockVisibleByUser(false);
@@ -688,6 +710,7 @@ public class CollapsedStatusBarFragment extends Fragment implements CommandQueue
 			    Settings.System.STATUS_BAR_CLOCK_SIZE, 14);
         mClockDefault.setClockSize(size);
         mClockCentered.setClockSize(size);
+        mLeftClock.setClockSize(size);
 
     }
 
@@ -696,6 +719,7 @@ public class CollapsedStatusBarFragment extends Fragment implements CommandQueue
 			    Settings.System.STATUS_BAR_CLOCK_FONT_STYLE, 0);
         mClockDefault.setClockStyle(size);
         mClockCentered.setClockStyle(size);
+        mLeftClock.setClockStyle(size);
 
     }
 
@@ -705,6 +729,7 @@ public class CollapsedStatusBarFragment extends Fragment implements CommandQueue
 			    Settings.System.STATUS_BAR_CLOCK_AM_PM_STYLE, 0);
         mClockDefault.setAmPmStyle(style);
         mClockCentered.setAmPmStyle(style);
+        mLeftClock.setAmPmStyle(style);
     }
 
 
@@ -713,6 +738,7 @@ public class CollapsedStatusBarFragment extends Fragment implements CommandQueue
 			    Settings.System.STATUS_BAR_CLOCK_SHOW_SECONDS, 0) == 1;
         mClockDefault.setShowSeconds(show);
         mClockCentered.setShowSeconds(show);
+        mLeftClock.setShowSeconds(show);
     }
 
     private void updateClockShowDate() {
@@ -720,6 +746,7 @@ public class CollapsedStatusBarFragment extends Fragment implements CommandQueue
 			    Settings.System.STATUS_BAR_CLOCK_SHOW_DATE, 0) == 1;
         mClockDefault.setShowDate(show);
         mClockCentered.setShowDate(show);
+        mLeftClock.setShowDate(show);
     }
 
     private void updateClockDateFormat() {
@@ -727,6 +754,7 @@ public class CollapsedStatusBarFragment extends Fragment implements CommandQueue
                 Settings.System.STATUS_BAR_CLOCK_DATE_FORMAT);
         mClockDefault.setDateFormat(format);
         mClockCentered.setDateFormat(format);
+        mLeftClock.setDateFormat(format);
     }
 
     private void updateClockDateStyle() {
@@ -734,6 +762,7 @@ public class CollapsedStatusBarFragment extends Fragment implements CommandQueue
 			    Settings.System.STATUS_BAR_CLOCK_DATE_STYLE, Clock.DATE_STYLE_REGULAR);
         mClockDefault.setDateStyle(style);
         mClockCentered.setDateStyle(style);
+        mLeftClock.setDateStyle(style);
     }
 
     private void updateClockShowDateSizeSmall() {
@@ -741,5 +770,26 @@ public class CollapsedStatusBarFragment extends Fragment implements CommandQueue
 			    Settings.System.STATUS_BAR_CLOCK_DATE_SIZE_SMALL, 0) == 1;
         mClockDefault.setShowDateSizeSmall(small);
         mClockCentered.setShowDateSizeSmall(small);
+        mLeftClock.setShowDateSizeSmall(small);
     }
+
+     public void hideLeftClock(boolean animate) {
+         if (mLeftClock != null) {
+             animateHide(mLeftClock, animate, false);
+         }
+     }
+ 
+     public void showLeftClock(boolean animate) {
+         updateClockStyle(animate);
+     }
+
+ 
+     private void updateClockStyle(boolean animate) {
+        if (mClockPosition == 0 || mClockPosition == 1 || mClockPosition == 2) {
+            animateHide(mLeftClock, animate, false);
+        } else {
+            animateShow(mLeftClock, animate);
+        }
+    }
+ 
 }

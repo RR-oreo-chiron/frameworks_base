@@ -16,6 +16,8 @@
 
 package com.android.systemui.statusbar;
 
+import static android.provider.Settings.Secure.STATUS_BAR_BATTERY_STYLE;
+
 import android.annotation.DrawableRes;
 import android.content.ContentResolver;
 import android.content.Context;
@@ -44,6 +46,7 @@ import android.view.accessibility.AccessibilityEvent;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 
+import com.android.settingslib.graph.BatteryMeterDrawableBase;
 import com.android.systemui.Dependency;
 import com.android.systemui.R;
 import com.android.systemui.statusbar.phone.SignalDrawable;
@@ -133,6 +136,7 @@ public class SignalClusterView extends LinearLayout implements NetworkController
     private boolean mActivityEnabled;
     private boolean mForceBlockWifi;
     private boolean mBlockVpn;
+    private boolean mNoBattery;
 
     private boolean mVoLTEicon;
 
@@ -210,6 +214,16 @@ public class SignalClusterView extends LinearLayout implements NetworkController
         if (blockVpn != mBlockVpn) {
             mBlockVpn = blockVpn;
             mVpnVisible = mSecurityController.isVpnEnabled() && !mBlockVpn;
+            if (blockVpn != mBlockVpn || STATUS_BAR_BATTERY_STYLE.equals(key)) {
+                mBlockVpn = blockVpn;
+                mVpnVisible = mSecurityController.isVpnEnabled() && !mBlockVpn;
+
+                apply();
+            }
+        } else if (STATUS_BAR_BATTERY_STYLE.equals(key)) {
+            final int style = newValue == null ?
+                BatteryMeterDrawableBase.BATTERY_STYLE_PORTRAIT : Integer.parseInt(newValue);
+            mNoBattery = /*style == BatteryMeterDrawableBase.BATTERY_STYLE_HIDDEN;*/false;
             apply();
         }
     }
@@ -271,7 +285,7 @@ public class SignalClusterView extends LinearLayout implements NetworkController
 
         int endPadding = mMobileSignalGroup.getChildCount() > 0 ? mMobileSignalGroupEndPadding : 0;
         mMobileSignalGroup.setPaddingRelative(0, 0, endPadding, 0);
-        Dependency.get(TunerService.class).addTunable(this, StatusBarIconController.ICON_BLACKLIST);
+        Dependency.get(TunerService.class).addTunable(this, StatusBarIconController.ICON_BLACKLIST, STATUS_BAR_BATTERY_STYLE);
         Handler mHandler = new Handler();
         SettingsObserver settingsObserver = new SettingsObserver(mHandler);
         settingsObserver.observe();
@@ -654,7 +668,7 @@ public class SignalClusterView extends LinearLayout implements NetworkController
 
         boolean anythingVisible = mNoSimsVisible || mWifiVisible || mIsAirplaneMode
                 || anyMobileVisible || mVpnVisible || mEthernetVisible;
-        setPaddingRelative(0, 0, anythingVisible ? mEndPadding : mEndPaddingNothingVisible, 0);
+        setPaddingRelative(0, 0, mNoBattery ? 0 : (anythingVisible ? mEndPadding : mEndPaddingNothingVisible), 0);
     }
 
     private class SettingsObserver extends ContentObserver {

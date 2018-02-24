@@ -219,6 +219,7 @@ import com.android.systemui.plugins.statusbar.NotificationSwipeActionHelper.Snoo
 import com.android.systemui.qs.QSFragment;
 import com.android.systemui.qs.QSPanel;
 import com.android.systemui.qs.QSTileHost;
+import com.android.systemui.qs.QuickStatusBarHeader;
 import com.android.systemui.qs.car.CarQSFragment;
 import com.android.systemui.qs.QuickStatusBarHeader;
 import com.android.systemui.recents.Recents;
@@ -307,6 +308,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.Stack;
 
+import lineageos.hardware.LiveDisplayManager;
 import lineageos.providers.LineageSettings;
 
 public class StatusBar extends SystemUI implements DemoMode,
@@ -496,6 +498,8 @@ public class StatusBar extends SystemUI implements DemoMode,
 
     // viewgroup containing the normal contents of the statusbar
     LinearLayout mStatusBarContent;
+    // Other views that need hiding for the notification ticker
+    View mCenterClockLayout;
 
     // expanded notifications
     protected NotificationPanelView mNotificationPanel; // the sliding/resizing panel within the notification window
@@ -845,6 +849,12 @@ public class StatusBar extends SystemUI implements DemoMode,
     private boolean mWereIconsJustHidden;
     private boolean mBouncerWasShowingWhenHidden;
 
+    private static final int CLOCK_DATE_POSITION_DEFAULT  = 0;
+    private static final int CLOCK_DATE_POSITION_CENTERED = 1;
+    private static final int CLOCK_DATE_POSITION_HIDDEN   = 2;
+    private static final int CLOCK_DATE_POSITION_LEFT   = 3;
+    private int mClockPos;
+
     public boolean isStartedGoingToSleep() {
         return mStartedGoingToSleep;
     }
@@ -1068,8 +1078,13 @@ public class StatusBar extends SystemUI implements DemoMode,
                 mLockscreenSettingsObserver,
                 UserHandle.USER_ALL);
 
+
         mContext.getContentResolver().registerContentObserver(Settings.Secure.getUriFor(
-                Settings.Secure.NAVIGATION_BAR_VISIBLE), false, mNavbarObserver, UserHandle.USER_ALL);
+                Settings.Secure.NAVIGATION_BAR_VISIBLE), 
+                false, 
+                mNavbarObserver, 
+                UserHandle.USER_ALL);
+ 
 
         mBarService = IStatusBarService.Stub.asInterface(
                 ServiceManager.getService(Context.STATUS_BAR_SERVICE));
@@ -1281,6 +1296,7 @@ public class StatusBar extends SystemUI implements DemoMode,
                     mStatusBarView.setScrimController(mScrimController);
                     mStatusBarView.setBouncerShowing(mBouncerShowing);
                     mStatusBarContent = (LinearLayout) mStatusBarView.findViewById(R.id.status_bar_contents);
+                    mCenterClockLayout = mStatusBarView.findViewById(R.id.center_clock_layout);
                     setAreThereNotifications();
                     checkBarModes();
                 }).getFragmentManager()
@@ -1439,7 +1455,7 @@ public class StatusBar extends SystemUI implements DemoMode,
                     ((QSFragment) qs).setHost(qsh);
                     mQSPanel = ((QSFragment) qs).getQsPanel();
                     mKeyguardStatusBar.setQSPanel(mQSPanel);
-                    mQuickStatusBarHeader = ((QSFragment) qs).getQuickStatusBarHeader();
+                    mQuickStatusBarHeader = ((QSFragment) qs).getQsHeader();
                     mStatusBarHeaderMachine.addObserver(mQuickStatusBarHeader);
                     mStatusBarHeaderMachine.updateEnablement();
                 }
@@ -3289,14 +3305,26 @@ public class StatusBar extends SystemUI implements DemoMode,
     }
 
     public boolean isUsingDarkTheme() {
-        OverlayInfo themeInfo = null;
+        OverlayInfo systemuiThemeInfo = null;
         try {
-            themeInfo = mOverlayManager.getOverlayInfo("com.android.systemui.theme.dark",
+            systemuiThemeInfo = mOverlayManager.getOverlayInfo("org.lineageos.overlay.dark",
                     mCurrentUserId);
         } catch (RemoteException e) {
             e.printStackTrace();
         }
-        return themeInfo != null && themeInfo.isEnabled();
+        return systemuiThemeInfo != null && systemuiThemeInfo.isEnabled();
+    }
+
+    private boolean isLiveDisplayNightModeOn() {
+        // SystemUI is initialized before LiveDisplay, so the service may not
+        // be ready when this is called the first time
+        LiveDisplayManager manager = LiveDisplayManager.getInstance(mContext);
+        try {
+            return manager.isNightModeEnabled();
+        } catch (NullPointerException e) {
+            Log.w(TAG, e.getMessage());
+        }
+        return false;
     }
 
     @Nullable
@@ -3874,6 +3902,13 @@ public class StatusBar extends SystemUI implements DemoMode,
         return mStatusBarView.getBarTransitions();
     }
 
+    @Override  // CommandQueue
+    public void setAutoRotate(boolean enabled) {
+        Settings.System.putInt(mContext.getContentResolver(),
+                Settings.System.ACCELEROMETER_ROTATION,
+                enabled ? 1 : 0);
+    }
+
     protected int computeBarMode(int oldVis, int newVis,
             int transientFlag, int translucentFlag, int transparentFlag) {
         final int oldMode = barMode(oldVis, transientFlag, translucentFlag, transparentFlag);
@@ -4101,6 +4136,10 @@ public class StatusBar extends SystemUI implements DemoMode,
             mTicking = true;
             mStatusBarContent.setVisibility(View.GONE);
             mStatusBarContent.startAnimation(loadAnim(true, null));
+            if(mClockPos == CLOCK_DATE_POSITION_CENTERED) {
+               mCenterClockLayout.setVisibility(View.GONE);
+               mCenterClockLayout.startAnimation(loadAnim(true, null));
+            }
             if (mTickerView != null) {
                 mTickerView.setVisibility(View.VISIBLE);
                 mTickerView.startAnimation(loadAnim(false, null));
@@ -4111,6 +4150,10 @@ public class StatusBar extends SystemUI implements DemoMode,
         public void tickerDone() {
             mStatusBarContent.setVisibility(View.VISIBLE);
             mStatusBarContent.startAnimation(loadAnim(false, null));
+            if(mClockPos == CLOCK_DATE_POSITION_CENTERED) {
+               mCenterClockLayout.setVisibility(View.VISIBLE);
+               mCenterClockLayout.startAnimation(loadAnim(false, null));
+            }
             if (mTickerView != null) {
                 mTickerView.setVisibility(View.GONE);
                 mTickerView.startAnimation(loadAnim(true, mTickingDoneListener));
@@ -4121,8 +4164,11 @@ public class StatusBar extends SystemUI implements DemoMode,
         public void tickerHalting() {
             if (mStatusBarContent.getVisibility() != View.VISIBLE) {
                 mStatusBarContent.setVisibility(View.VISIBLE);
-                mStatusBarContent
-                        .startAnimation(loadAnim(false, null));
+                mStatusBarContent.startAnimation(loadAnim(false, null));
+                if(mClockPos == CLOCK_DATE_POSITION_CENTERED) {
+                   mCenterClockLayout.setVisibility(View.VISIBLE);
+                   mCenterClockLayout.startAnimation(loadAnim(false, null));
+                }
             }
             if (mTickerView != null) {
                 mTickerView.setVisibility(View.GONE);
@@ -4626,6 +4672,7 @@ public class StatusBar extends SystemUI implements DemoMode,
                 com.android.internal.R.dimen.status_bar_height);
         if (mStatusBarWindowManager != null && mNaturalBarHeight != oldBarHeight) {
             mStatusBarWindowManager.setBarHeight(mNaturalBarHeight);
+            mStatusBarView.onDensityOrFontScaleChanged();
         }
         mMaxAllowedKeyguardNotifications = res.getInteger(
                 R.integer.keyguard_max_notification_count);
@@ -5391,21 +5438,36 @@ public class StatusBar extends SystemUI implements DemoMode,
     protected void updateTheme() {
         final boolean inflated = mStackScroller != null;
 
-        int userThemeSetting = Settings.System.getIntForUser(mContext.getContentResolver(),
-                Settings.System.SYSTEM_UI_THEME, 0, mCurrentUserId);
-        boolean useDarkTheme = false;
-        if (userThemeSetting == 0) {
-            // The system wallpaper defines if QS should be light or dark.
-            WallpaperColors systemColors = mColorExtractor
-                    .getWallpaperColors(WallpaperManager.FLAG_SYSTEM);
-            useDarkTheme = systemColors != null
-                    && (systemColors.getColorHints() & WallpaperColors.HINT_SUPPORTS_DARK_THEME) != 0;
-        } else {
-            useDarkTheme = userThemeSetting == 2;
+        // 0 = auto, 1 = time-based, 2 = light, 3 = dark
+        final int globalStyleSetting = LineageSettings.System.getInt(mContext.getContentResolver(),
+                LineageSettings.System.BERRY_GLOBAL_STYLE, 0);
+        WallpaperColors systemColors = mColorExtractor
+                .getWallpaperColors(WallpaperManager.FLAG_SYSTEM);
+        final boolean useDarkTheme;
+
+        switch (globalStyleSetting) {
+            case 1:
+                useDarkTheme = isLiveDisplayNightModeOn();
+                break;
+            case 2:
+                useDarkTheme = false;
+                break;
+            case 3:
+                useDarkTheme = true;
+                break;
+            default:
+                useDarkTheme = systemColors != null && (systemColors.getColorHints() &
+                        WallpaperColors.HINT_SUPPORTS_DARK_THEME) != 0;
+                break;
         }
+
         if (isUsingDarkTheme() != useDarkTheme) {
             try {
-                mOverlayManager.setEnabled("com.android.systemui.theme.dark",
+                mOverlayManager.setEnabled("org.lineageos.overlay.dark",
+                        useDarkTheme, mCurrentUserId);
+                mOverlayManager.setEnabled("org.lineageos.overlay.sysuidark",
+                        useDarkTheme, mCurrentUserId);
+                mOverlayManager.setEnabled("org.lineageos.overlay.settingsdark",
                         useDarkTheme, mCurrentUserId);
             } catch (RemoteException e) {
                 Log.w(TAG, "Can't change theme", e);
@@ -6658,10 +6720,13 @@ public class StatusBar extends SystemUI implements DemoMode,
         void observe() {
             ContentResolver resolver = mContext.getContentResolver();
             resolver.registerContentObserver(Settings.System.getUriFor(
-                    Settings.System.STATUS_BAR_SHOW_TICKER),
+                    Settings.System.STATUS_BAR_CLOCK_DATE_POSITION),
                     false, this, UserHandle.USER_ALL);
+            resolver.registerContentObserver(LineageSettings.System.getUriFor(
+                    LineageSettings.System.BERRY_GLOBAL_STYLE),
+                    true,this, UserHandle.USER_ALL);
             resolver.registerContentObserver(Settings.System.getUriFor(
-                    Settings.System.SYSTEM_UI_THEME),
+                    Settings.System.STATUS_BAR_SHOW_TICKER),
                     false, this, UserHandle.USER_ALL);
             resolver.registerContentObserver(Settings.System.getUriFor(
                     Settings.System.HEADS_UP_BLACKLIST_VALUES),
@@ -6759,12 +6824,18 @@ public class StatusBar extends SystemUI implements DemoMode,
             resolver.registerContentObserver(Settings.System.getUriFor(
                     Settings.System.QS_COLUMNS_LANDSCAPE),
                     false, this, UserHandle.USER_ALL);
+            resolver.registerContentObserver(Settings.System.getUriFor(
+                    Settings.System.SHOW_BATTERY_PERCENT),
+                    false, this, UserHandle.USER_ALL);
+            resolver.registerContentObserver(Settings.Secure.getUriFor(
+                    Settings.Secure.STATUS_BAR_BATTERY_STYLE),
+                    false, this, UserHandle.USER_ALL);
         }
 
         @Override
         public void onChange(boolean selfChange, Uri uri) {         
-            if (uri.equals(Settings.System.getUriFor(
-                    Settings.System.SYSTEM_UI_THEME))) {
+            if (uri.equals (LineageSettings.System.getUriFor(
+                    LineageSettings.System.BERRY_GLOBAL_STYLE))) {
                 updateTheme();
             } else if (uri.equals(Settings.System.getUriFor(
                     Settings.System.HEADS_UP_BLACKLIST_VALUES))) {
@@ -6833,6 +6904,11 @@ public class StatusBar extends SystemUI implements DemoMode,
                     uri.equals(Settings.System.getUriFor(Settings.System.QS_COLUMNS_PORTRAIT)) ||
                     uri.equals(Settings.System.getUriFor(Settings.System.QS_COLUMNS_LANDSCAPE))) {
                 setQsRowsColumns();
+            } else if (uri.equals(Settings.System.getUriFor(
+                    Settings.System.SHOW_BATTERY_PERCENT))
+                    || uri.equals(Settings.Secure.getUriFor(
+                    Settings.Secure.STATUS_BAR_BATTERY_STYLE))) {
+                updateBatterySettings();
             }
         }
 
@@ -6851,6 +6927,20 @@ public class StatusBar extends SystemUI implements DemoMode,
             setForceAmbient();
             setFpToDismissNotifications();
             updateBlurSettings();
+            updateBatterySettings();
+            updateClockStyle();
+        }
+    }
+
+    public void updateBatterySettings() {
+        if (mStatusBarView != null) {
+            mStatusBarView.updateBatterySettings();
+        }
+        if (mKeyguardStatusBar != null) {
+            mKeyguardStatusBar.updateBatterySettings();
+        }
+        if (mQuickStatusBarHeader != null) {
+            mQuickStatusBarHeader.updateBatterySettings();
         }
     }
 
@@ -6875,6 +6965,11 @@ public class StatusBar extends SystemUI implements DemoMode,
     private void updateBatterySaverColor() {
         mBatterySaverColor = Settings.Secure.getIntForUser(mContext.getContentResolver(),
                 Settings.Secure.STATUS_BAR_BATTERY_SAVER_COLOR, 0xfff4511e, UserHandle.USER_CURRENT);
+    }
+
+    private void updateClockStyle() {
+       mClockPos = Settings.System.getInt(mContext.getContentResolver(),
+			    Settings.System.STATUS_BAR_CLOCK_DATE_POSITION, CLOCK_DATE_POSITION_DEFAULT);
     }
 
     private void setForceAmbient() {
