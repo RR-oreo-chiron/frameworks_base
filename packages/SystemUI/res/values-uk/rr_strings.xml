@@ -19,12 +19,11 @@
   <!-- RR Tile -->
   <string name="quick_settings_rr_label">Конфігурація</string>
   <!-- Power menu -->
-  <string name="global_action_restart_system">Перезавантажити</string>
   <string name="global_action_restart_advanced">Розширені налаштування</string>
   <string name="global_action_restart_recovery">Recovery</string>
   <string name="global_action_restart_bootloader">Загрузчик</string>
   <string name="global_action_restart_ui">Інтерфейс системи</string>
-  <string name="global_action_restart_hot">Гарячо</string>
+  <string name="global_action_restart_hot">Швидке перезавантаження</string>
   <string name="global_action_screenshot">Знімок екрану</string>
   <!-- Screenshot Delete Toast -->
   <string name="delete_screenshot_toast">Знімок екрану видалено</string>
@@ -45,7 +44,7 @@
   <string name="onthego_notif_camera_changed">Режим камери змінено</string>
   <string name="onthego_transparency">Прозорість</string>
   <string name="onthego_front_camera">Використовувати передню камеру</string>
-  <string name="onthego_service_toggle">Автоматично перезавантажити сервіс</string>
+  <string name="onthego_service_toggle">Автоматично перезапустити службу</string>
   <!-- Content description of the data connection type HSPA+ for accessibility (not shown on the screen). [CHAR LIMIT=NONE] -->
   <string name="accessibility_data_connection_hspap">HSPA+</string>
   <!-- SystemUI Tuner Parts -->
@@ -62,7 +61,7 @@
   <string name="quick_settings_reboot_recovery_label">Режим відновлення</string>
   <!-- Partial Screenshot -->
   <string name="screenshot_abort_title">Знімок екрану не було створено</string>
-  <string name="screenshot_abort_text">Помилка операції.</string>
+  <string name="screenshot_abort_text">Операцію перервано.</string>
   <!-- Compass QS Tile -->
   <string name="quick_settings_compass_label">Компас</string>
   <string name="quick_settings_compass_value"><xliff:g id="degrees">%1$.0f</xliff:g>\u00b0 <xliff:g id="direction">%2$s</xliff:g></string>
@@ -155,6 +154,12 @@
   <string name="quick_settings_screenrecord_lq_label">Запис екрану LQ</string>
   <string name="quick_settings_screenrecord_mq_label">Запис екрану MQ</string>
   <string name="quick_settings_screenrecord_hq_label">Запис екрану HQ</string>
+  <!-- Navigation bar Tile -->
+  <string name="quick_settings_navigation_bar">Панель навігації</string>
+  <string name="quick_settings_smartbar">Розумна панель навігації</string>
+  <string name="quick_settings_fling">Fling</string>
+  <string name="quick_settings_navigation_default">Запаси</string>
+  <string name="quick_settings_navigation_disabled">Вимкнено</string>
   <string name="omnijaws_service_error">Помилка</string>
   <string name="omnijaws_service_unkown">Немає даних про погоду</string>
   <string name="omnijaws_service_error_long">Помилка завантаження даних про погоду</string>
@@ -174,11 +179,18 @@
   <string name="quick_settings_expanded_statusbar_off">Приховувати рядок стану</string>
   <!-- Weather string format in expanded statusbar header -->
   <string name="status_bar_weather_format"><xliff:g id="temp">%1$s</xliff:g></string>
-  <dimen name="screenrecord_hint_size">48dp</dimen>
   <!-- Pie controls -->
   <string name="pie_state_name">Управління PIE</string>
   <string name="pie_state_summary">Використовувати керування PIE в повноекранному режимі</string>
   <string name="pie_battery_level">"Заряд батареї"</string>
   <string name="quick_settings_pie">Pie</string>
   <string name="recents_custom_android_n">Очистити всі</string>
+  <!-- Indication on the keyguard that is shown when the device is charging with a turbo power charger. Should match keyguard_plugged_in_turbo_power_charging [CHAR LIMIT=40]-->
+  <string name="keyguard_indication_turbo_power_time">TurboPower підключено (<xliff:g id="charging_time_left">%s</xliff:g> до повного)</string>
+  <string name="keyguard_plugged_in_turbo_power_charging">TurboPower підключено</string>
+  <!-- Kill button in notification guts -->
+  <string name="force_stop_dlg_title">Примусово зупинити?</string>
+  <string name="force_stop_dlg_text">Примусове вимкнення додатка може призвести до збою в його роботі.</string>
+  <string name="kill">Завершити додаток</string>
+  <!-- Recents free RAM -->
 </resources>

@@ -272,7 +272,6 @@ import com.android.server.vr.VrManagerInternal;
 import com.android.server.wm.AppTransition;
 
 import lineageos.providers.LineageSettings;
-import org.lineageos.internal.util.ActionUtils;
 import static org.lineageos.internal.util.DeviceKeysConstants.*;
 
 import java.io.File;
@@ -648,9 +647,6 @@ public class PhoneWindowManager implements WindowManagerPolicy {
 
     boolean mVolumeAnswerCall;
 
-    boolean mKillAppLongpressBack;
-    int mBackKillTimeout;
-
     int mPointerLocationMode = 0; // guarded by mLock
 
     // The last window we were told about in focusChanged.
@@ -805,6 +801,9 @@ public class PhoneWindowManager implements WindowManagerPolicy {
     // Behavior of HOME button during an incoming call.
     // (See LineageSettings.Secure.RING_HOME_BUTTON_BEHAVIOR.)
     int mRingHomeBehavior;
+
+    // whether System Navigation Keys are enabled
+    boolean mSystemNavigationKeysEnabled;
 
     Display mDisplay;
 
@@ -1038,10 +1037,10 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                 case MSG_DISPOSE_INPUT_CONSUMER:
                     disposeInputConsumer((InputConsumer) msg.obj);
                     break;
-                case MSG_BACK_DELAYED_PRESS:
+               /* case MSG_BACK_DELAYED_PRESS:
                     backMultiPressAction((Long) msg.obj, msg.arg1);
                     finishBackKeyPress();
-                    break;
+                    break;*/
                 case MSG_ACCESSIBILITY_SHORTCUT:
                     accessibilityShortcutActivated();
                     break;
@@ -1175,9 +1174,6 @@ public class PhoneWindowManager implements WindowManagerPolicy {
             resolver.registerContentObserver(LineageSettings.System.getUriFor(
                     LineageSettings.System.CAMERA_LAUNCH), false, this,
                     UserHandle.USER_ALL);
-            resolver.registerContentObserver(LineageSettings.Secure.getUriFor(
-                    LineageSettings.Secure.KILL_APP_LONGPRESS_BACK), false, this,
-                    UserHandle.USER_ALL);
             resolver.registerContentObserver(Settings.Secure.getUriFor(
                     Settings.Secure.NAVIGATION_BAR_VISIBLE), false, this,
                     UserHandle.USER_ALL);
@@ -1201,6 +1197,9 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                     UserHandle.USER_ALL);
             resolver.registerContentObserver(Settings.System.getUriFor(
                     Settings.System.ANBI_ENABLED), false, this,
+                    UserHandle.USER_ALL);
+            resolver.registerContentObserver(Settings.Global.getUriFor(
+                    Settings.Secure.SYSTEM_NAVIGATION_KEYS_ENABLED), false, this,
                     UserHandle.USER_ALL);
             updateSettings();
         }
@@ -2055,21 +2054,6 @@ public class PhoneWindowManager implements WindowManagerPolicy {
 
     private final ScreenrecordRunnable mScreenrecordRunnable = new ScreenrecordRunnable();
 
-    Runnable mBackLongPress = new Runnable() {
-        public void run() {
-            if (unpinActivity(false)) {
-                return;
-            }
-
-            if (ActionUtils.killForegroundApp(mContext, mCurrentUserId)) {
-                performHapticFeedbackLw(null, HapticFeedbackConstants.LONG_PRESS, false);
-                Toast.makeText(mContext,
-                        org.lineageos.platform.internal.R.string.app_killed_message,
-                        Toast.LENGTH_SHORT).show();
-            }
-        }
-    };
-
     @Override
     public void screenRecordAction(int mode) {
         mContext.enforceCallingOrSelfPermission(Manifest.permission.ACCESS_SURFACE_FLINGER,
@@ -2427,8 +2411,6 @@ public class PhoneWindowManager implements WindowManagerPolicy {
 
         mHandleVolumeKeysInWM = mContext.getResources().getBoolean(
                 com.android.internal.R.bool.config_handleVolumeKeysInWindowManager);
-        mBackKillTimeout = mContext.getResources().getInteger(
-                org.lineageos.platform.internal.R.integer.config_backKillTimeout);
 
         readConfigurationDependentBehaviors();
 
@@ -2789,6 +2771,9 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                     LineageSettings.Secure.RING_HOME_BUTTON_BEHAVIOR,
                     LineageSettings.Secure.RING_HOME_BUTTON_BEHAVIOR_DEFAULT,
                     UserHandle.USER_CURRENT);
+           mSystemNavigationKeysEnabled = Settings.Secure.getIntForUser(resolver,
+                    Settings.Secure.SYSTEM_NAVIGATION_KEYS_ENABLED, 0,
+                    UserHandle.USER_CURRENT) == 1;
             mTorchLongPressPowerEnabled = LineageSettings.System.getIntForUser(
                     resolver, LineageSettings.System.TORCH_LONG_PRESS_POWER_GESTURE, 0,
                     UserHandle.USER_CURRENT) == 1;
@@ -2825,8 +2810,6 @@ public class PhoneWindowManager implements WindowManagerPolicy {
             mCameraLaunch = LineageSettings.System.getIntForUser(
                     resolver, LineageSettings.System.CAMERA_LAUNCH, 0,
                     UserHandle.USER_CURRENT) == 1;
-            mKillAppLongpressBack = LineageSettings.Secure.getInt(
-                    resolver, LineageSettings.Secure.KILL_APP_LONGPRESS_BACK, 0) == 1;
 
             mPieState = Settings.Secure.getIntForUser(resolver,
                     Settings.Secure.PIE_STATE, 0, UserHandle.USER_CURRENT) == 1;
@@ -4067,11 +4050,6 @@ public class PhoneWindowManager implements WindowManagerPolicy {
         if (mPendingCapsLockToggle && !KeyEvent.isMetaKey(keyCode) && !KeyEvent.isAltKey(keyCode)) {
             mPendingCapsLockToggle = false;
         }
-
-        if (keyCode == KeyEvent.KEYCODE_BACK && !down) {
-            mHandler.removeCallbacks(mBackLongPress);
-        }
-
         // First we always handle the home key here, so applications
         // can never break it, although if keyguard is on, we do let
         // it handle it, because that gives us the correct 5 second
@@ -4363,12 +4341,6 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                 launchAssistAction(Intent.EXTRA_ASSIST_INPUT_HINT_KEYBOARD, event.getDeviceId());
             }
             return -1;
-        } else if (keyCode == KeyEvent.KEYCODE_BACK) {
-            if (mKillAppLongpressBack || unpinActivity(true)) {
-                if (down && repeatCount == 0) {
-                    mHandler.postDelayed(mBackLongPress, mBackKillTimeout);
-                }
-            }
         }
 
         // Shortcuts are invoked through Search+key, so intercept those here
@@ -7312,7 +7284,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
         if (event.getAction() == KeyEvent.ACTION_UP) {
             if (!mAccessibilityManager.isEnabled()
                     || !mAccessibilityManager.sendFingerprintGesture(event.getKeyCode())) {
-                if (areSystemNavigationKeysEnabled()) {
+                if (mSystemNavigationKeysEnabled) {
                     sendSystemKeyToStatusBarAsync(event.getKeyCode());
                 }
             }
@@ -8988,11 +8960,6 @@ public class PhoneWindowManager implements WindowManagerPolicy {
     private boolean isTheaterModeEnabled() {
         return Settings.Global.getInt(mContext.getContentResolver(),
                 Settings.Global.THEATER_MODE_ON, 0) == 1;
-    }
-
-    private boolean areSystemNavigationKeysEnabled() {
-        return Settings.Secure.getIntForUser(mContext.getContentResolver(),
-                Settings.Secure.SYSTEM_NAVIGATION_KEYS_ENABLED, 0, UserHandle.USER_CURRENT) == 1;
     }
 
     @Override

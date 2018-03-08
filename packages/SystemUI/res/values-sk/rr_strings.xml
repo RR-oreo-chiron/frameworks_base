@@ -19,7 +19,6 @@
   <!-- RR Tile -->
   <string name="quick_settings_rr_label">Konfigurácia</string>
   <!-- Power menu -->
-  <string name="global_action_restart_system">Reštartovať</string>
   <string name="global_action_restart_advanced">Rozšírené</string>
   <string name="global_action_restart_recovery">Recovery</string>
   <string name="global_action_restart_bootloader">Bootloader</string>
@@ -155,6 +154,12 @@
   <string name="quick_settings_screenrecord_lq_label">Záznam obrazovky LQ</string>
   <string name="quick_settings_screenrecord_mq_label">Záznam obrazovky MQ</string>
   <string name="quick_settings_screenrecord_hq_label">Záznam obrazovky HQ</string>
+  <!-- Navigation bar Tile -->
+  <string name="quick_settings_navigation_bar">Navigačný panel</string>
+  <string name="quick_settings_smartbar">Smartbar</string>
+  <string name="quick_settings_fling">Fling</string>
+  <string name="quick_settings_navigation_default">Stock</string>
+  <string name="quick_settings_navigation_disabled">Vypnuté</string>
   <string name="omnijaws_service_error">Chyba</string>
   <string name="omnijaws_service_unkown">Žiadne údaje o počasí</string>
   <string name="omnijaws_service_error_long">Chyba pri načítavaní údajov o počasí</string>
@@ -174,11 +179,18 @@
   <string name="quick_settings_expanded_statusbar_off">Skryť stavový riadok</string>
   <!-- Weather string format in expanded statusbar header -->
   <string name="status_bar_weather_format"><xliff:g id="temp">%1$s</xliff:g></string>
-  <dimen name="screenrecord_hint_size">48dp</dimen>
   <!-- Pie controls -->
   <string name="pie_state_name">Kruhové ovládanie</string>
   <string name="pie_state_summary">Použiť kruhové ovládacie prvky v pohlcujúcom režime</string>
   <string name="pie_battery_level">"ÚROVEŇ NABITIA BATÉRIE "</string>
   <string name="quick_settings_pie">Pie</string>
   <string name="recents_custom_android_n">VYMAZAŤ VŠETKO</string>
+  <!-- Indication on the keyguard that is shown when the device is charging with a turbo power charger. Should match keyguard_plugged_in_turbo_power_charging [CHAR LIMIT=40]-->
+  <string name="keyguard_indication_turbo_power_time">Turbo-Power je pripojený (<xliff:g id="charging_time_left">%s</xliff:g> až do plna)</string>
+  <string name="keyguard_plugged_in_turbo_power_charging">TurboPower je pripojený</string>
+  <!-- Kill button in notification guts -->
+  <string name="force_stop_dlg_title">Vynútiť zastavenie?</string>
+  <string name="force_stop_dlg_text">Ak vynútite zastavenie aplikácie, môže sa správať zvláštne.</string>
+  <string name="kill">Ukončiť aplikáciu</string>
+  <!-- Recents free RAM -->
 </resources>

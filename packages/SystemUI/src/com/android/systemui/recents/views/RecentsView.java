@@ -690,7 +690,7 @@ public class RecentsView extends FrameLayout {
 	    mDate.setTextColor(mDatecolor);
 	    }
    } else {
-	    mMemBar.getProgressDrawable().setColorFilter(null);
+        mMemBar.getProgressDrawable().setColorFilter(mContext.getResources().getColor(R.color.system_accent_color), Mode.MULTIPLY);
 	    mMemText.setTextColor(mDefaultcolor);
 	    mClock.setTextColor(mDefaultcolor);
 	    mDate.setTextColor(mDefaultcolor);
@@ -950,7 +950,7 @@ public class RecentsView extends FrameLayout {
         mAm.getMemoryInfo(memInfo);
             int available = (int)(memInfo.availMem / 1048576L);
             int max = (int)(getTotalMemory() / 1048576L);
-            mMemText.setText("Free RAM: " + String.valueOf(available) + "MB");
+            mMemText.setText(String.format(getResources().getString(R.string.recents_free_ram),available));
             mMemBar.setMax(max);
             mMemBar.setProgress(available);
     }

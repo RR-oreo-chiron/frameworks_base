@@ -22,7 +22,6 @@
 
 
     <!-- Power menu -->
-    <string name="global_action_restart_system">Reboot</string>
     <string name="global_action_restart_advanced">Advanced</string>
     <string name="global_action_restart_recovery">Recovery</string>
     <string name="global_action_restart_bootloader">Bootloader</string>
@@ -212,8 +211,6 @@
     <!-- Weather string format in expanded statusbar header -->
     <string name="status_bar_weather_format"><xliff:g id="temp">%1$s</xliff:g></string>
 
-  <dimen name="screenrecord_hint_size">48dp</dimen>
-
     <!-- Pie controls -->
     <string name="pie_date_format" translatable="false">EEEE, dd MMMM yyyy</string>
     <string name="pie_hour_format_12" translatable="false">hh:mm</string>
@@ -224,4 +221,18 @@
     <string name="pie_battery_level">"BATTERY LEVEL "</string>
     <string name="quick_settings_pie">Pie</string>
     <string name="recents_custom_android_n">CLEAR ALL</string>
+    <!-- Indication on the keyguard that is shown when the device is charging with a turbo power charger. Should match keyguard_plugged_in_turbo_power_charging [CHAR LIMIT=40]-->
+    <string name="keyguard_indication_turbo_power_time">TurboPower connected (<xliff:g id="charging_time_left">%s</xliff:g> until full)</string>
+    <string name="keyguard_plugged_in_turbo_power_charging">TurboPower connected</string>
+
+    <!-- Kill button in notification guts -->
+    <string name="force_stop_dlg_title">Force stop?</string>
+    <string name="force_stop_dlg_text">If you force stop an app, it may misbehave.</string>
+    <string name="dlg_ok" translatable="false">@android:string/ok</string>
+    <string name="dlg_cancel" translatable="false">@android:string/cancel</string>
+    <string name="kill">Kill App</string>
+    
+   <!-- Recents free RAM -->
+   <string name="recents_free_ram">Free RAM: %1$d MB</string>
+
 </resources>

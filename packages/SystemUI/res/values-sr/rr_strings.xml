@@ -121,6 +121,7 @@
   <!-- Screen record notification error title -->
   <string name="screenrecord_notif_error">Снимање екрана није могуће</string>
   <!-- Screenshot QS tile -->
+  <!-- Navigation bar Tile -->
   <string name="omnijaws_service_error">Грешка</string>
   <string name="omnijaws_service_unkown">Нема података о времену</string>
   <string name="omnijaws_service_error_long">Грешка при учитавању података временске прогнозе</string>
@@ -135,11 +136,13 @@
   <string name="quick_settings_expanded_desktop_off">Нормална</string>
   <!-- Weather string format in expanded statusbar header -->
   <string name="status_bar_weather_format"><xliff:g id="temp">%1$s</xliff:g></string>
-  <dimen name="screenrecord_hint_size">48dp</dimen>
   <!-- Pie controls -->
   <string name="pie_state_name">\"Пита\" контроле</string>
   <string name="pie_state_summary">Употреба конторла пите у раду преко целог екрана</string>
   <string name="pie_battery_level">"НИВО БАТЕРИЈЕ "</string>
   <string name="quick_settings_pie">Пита</string>
   <string name="recents_custom_android_n">ОЧИСТИ СВЕ</string>
+  <!-- Indication on the keyguard that is shown when the device is charging with a turbo power charger. Should match keyguard_plugged_in_turbo_power_charging [CHAR LIMIT=40]-->
+  <!-- Kill button in notification guts -->
+  <!-- Recents free RAM -->
 </resources>

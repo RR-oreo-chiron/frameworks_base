@@ -19,7 +19,6 @@
   <!-- RR Tile -->
   <string name="quick_settings_rr_label">Säädöt</string>
   <!-- Power menu -->
-  <string name="global_action_restart_system">Uudelleen käynnistys</string>
   <string name="global_action_restart_advanced">Edistynyt</string>
   <string name="global_action_restart_recovery">Recovery-tila</string>
   <string name="global_action_restart_bootloader">Bootloader-tila</string>
@@ -155,6 +154,7 @@
   <string name="quick_settings_screenrecord_lq_label">Näytön tallennus matala laatu</string>
   <string name="quick_settings_screenrecord_mq_label">Näytön tallennus normaali laatu</string>
   <string name="quick_settings_screenrecord_hq_label">Näytön tallennus korkea laatu</string>
+  <!-- Navigation bar Tile -->
   <string name="omnijaws_service_error">Virhe</string>
   <string name="omnijaws_service_unkown">Ei säätietoja</string>
   <string name="omnijaws_service_error_long">Virhe ladattaessa säätietoja</string>
@@ -174,8 +174,13 @@
   <string name="quick_settings_expanded_statusbar_off">Piilota ilmoituspalkki</string>
   <!-- Weather string format in expanded statusbar header -->
   <string name="status_bar_weather_format"><xliff:g id="temp">%1$s</xliff:g></string>
-  <dimen name="screenrecord_hint_size">48dp</dimen>
   <!-- Pie controls -->
   <string name="pie_state_name">Pie-ohjaus</string>
+  <string name="pie_state_summary">Käytä piirakka näppäimiä mukaansa tempaavassa tilassa</string>
+  <string name="pie_battery_level">"AKUN TASO "</string>
+  <string name="quick_settings_pie">Piirakka</string>
   <string name="recents_custom_android_n">TYHJENNÄ KAIKKI</string>
+  <!-- Indication on the keyguard that is shown when the device is charging with a turbo power charger. Should match keyguard_plugged_in_turbo_power_charging [CHAR LIMIT=40]-->
+  <!-- Kill button in notification guts -->
+  <!-- Recents free RAM -->
 </resources>
