@@ -9099,6 +9099,18 @@ public final class Settings {
         public static final String EDGE_GESTURES_BACK_SCREEN_PERCENT = "edge_gestures_back_screen_percent";
 
         /**
+         * Show UI feedback when using back gesture.
+         * @hide
+         */
+        public static final String EDGE_GESTURES_BACK_SHOW_UI_FEEDBACK = "edge_gestures_back_show_ui_feedback";
+
+        /**
+         * Use black arrow theme instead of the white version.
+         * @hide
+         */
+        public static final String EDGE_GESTURES_BACK_USE_BLACK_ARROW = "edge_gestures_back_use_black_arrow";
+
+        /**
          * Used to store the last used system ui flags to make qs settings stick after reboot
          * @hide
          */
