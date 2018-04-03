@@ -828,6 +828,10 @@ public class AudioService extends IAudioService.Stub
         mUserManagerInternal.addUserRestrictionsListener(mUserRestrictionsListener);
 
         mRecordMonitor.initMonitor();
+
+        mVolumeKeysControlRingStream = LineageSettings.System.getIntForUser(mContentResolver,
+                LineageSettings.System.VOLUME_KEYS_CONTROL_RING_STREAM, 1,
+                UserHandle.USER_CURRENT) == 1;
     }
 
     public void systemReady() {
